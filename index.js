@@ -1,10 +1,20 @@
 // Dependencies
-const inquirer = require('inquirer');
 const fs = require('fs/promises');
+const inquirer = require('inquirer');
+const mysql2 = require('mysql2');
+const cTable = require('console.table');
+
+// Create a connection to the database
+const connection = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'HullGull983!$*',
+    database: 'company'
+  });
 
 // Handle Main options
-function handleMainOptions(selection) {
-    switch (selection.selection) {
+function handleMainOptions(choice) {
+    switch (choice.selection) {
         case 'View All Departments':
             //do stuff
             break;
