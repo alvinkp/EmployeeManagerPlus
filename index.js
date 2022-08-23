@@ -16,7 +16,7 @@ const connection = mysql2.createConnection({
 function addToDatabase(category, data){
     switch(category){
         case 'department':
-            connection.query(`INSERT INTO departments (department_name) VALUES (${data})`);
+            connection.execute(`INSERT INTO departments (department_name) VALUES ("${data}")`);
             console.log(`Added ${data} to Departments Database`)
             break;
         
@@ -70,9 +70,11 @@ function handleMainOptions(choice) {
             break;
         case 'Add A Role':
             //do stuff
+            addToDatabase("role", "test");
             break;
         case 'Add An Employee':
             //do stuff
+            addToDatabase("employee", "test");
             break;
         case 'Update An Employee Role':
             //do stuff
