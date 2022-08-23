@@ -4,12 +4,12 @@ const inquirer = require('inquirer');
 const mysql2 = require('mysql2');
 const cTable = require('console.table');
 
-// Create a connection to the database
-const connection = mysql.createConnection({
+// MYSQL2: Create a connection to the database
+const connection = mysql2.createConnection({
     host: 'localhost',
     user: 'root',
     password: 'HullGull983!$*',
-    database: 'company'
+    database: 'company_db'
   });
 
 // Handle Main options
@@ -17,12 +17,33 @@ function handleMainOptions(choice) {
     switch (choice.selection) {
         case 'View All Departments':
             //do stuff
+            connection.query(
+                'SELECT id AS "ID", department_name AS "Department Name" FROM departments ORDER BY id;',
+                function(results,fields) {
+                    console.log('\n');
+                    console.table(fields);
+                    presentOptions();
+                });
             break;
         case 'View All Roles':
             //do stuff
+            connection.query(
+                'SELECT roles.id AS "ID", title AS "Title", salary AS "Salary", department_name AS "Department Name" FROM roles INNER JOIN departments ON roles.department_id=departments.id ORDER BY roles.id;',
+                function(results,fields) {
+                    console.log('\n');
+                    console.table(fields);
+                    presentOptions();
+                });
             break;
         case 'View All Employees':
             //do stuff
+            connection.query(
+                'SELECT worker.id AS "ID", worker.first_name AS "First Name", worker.last_name AS "Last Name", roles.title AS "Title", department_name AS "Department", roles.salary AS "Salary", CONCAT(`worker.first_name`," ",`worker.last_name`) AS Manager FROM employees worker LEFT JOIN employees mgr ON worker.manager_id=mgr.id INNER JOIN roles ON worker.role_id=roles.id INNER JOIN departments ON roles.department_id=departments.id ORDER BY worker.id;',
+                function(results,fields) {
+                    console.log('\n');
+                    console.table(fields);
+                    presentOptions();
+                });
             break;
         case 'Add A Department':
             //do stuff
@@ -41,8 +62,8 @@ function handleMainOptions(choice) {
     }
 }
 
-// Starts initial display of options
-function init() {
+// INQUIRE: Present options
+function presentOptions(){
     inquirer
         .prompt([
             {
@@ -55,6 +76,11 @@ function init() {
         .then((answer) => {
             handleMainOptions(answer);
         })
+}
+
+// INQUIRE: Starts initial display of options
+function init() {
+    presentOptions();
 }
 
 // Call init to show list of options
