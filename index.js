@@ -12,6 +12,25 @@ const connection = mysql2.createConnection({
     database: 'company_db'
   });
 
+// Add Department, Add a Role, Add an Employee function
+function addToDatabase(category, data){
+    switch(category){
+        case 'department':
+            connection.query(`INSERT INTO departments (department_name) VALUES (${data})`);
+            console.log(`Added ${data} to Departments Database`)
+            break;
+        
+        case 'role':
+            break;
+
+        case 'employee':
+            break;
+
+        default:
+            console.log("There's been a grave mistake!");
+    }
+}
+
 // Handle Main options
 function handleMainOptions(choice) {
     switch (choice.selection) {
@@ -38,7 +57,7 @@ function handleMainOptions(choice) {
         case 'View All Employees':
             //do stuff
             connection.query(
-                'SELECT worker.id AS "ID", worker.first_name AS "First Name", worker.last_name AS "Last Name", roles.title AS "Title", department_name AS "Department", roles.salary AS "Salary", CONCAT(`worker.first_name`," ",`worker.last_name`) AS Manager FROM employees worker LEFT JOIN employees mgr ON worker.manager_id=mgr.id INNER JOIN roles ON worker.role_id=roles.id INNER JOIN departments ON roles.department_id=departments.id ORDER BY worker.id;',
+                'SELECT worker.id AS "ID", worker.first_name AS "First Name", worker.last_name AS "Last Name", roles.title AS "Title", department_name AS "Department", roles.salary AS "Salary", CONCAT(mgr.first_name," ",mgr.last_name) AS Manager FROM employees worker LEFT JOIN employees mgr ON worker.manager_id=mgr.id INNER JOIN roles ON worker.role_id=roles.id INNER JOIN departments ON roles.department_id=departments.id ORDER BY worker.id;',
                 function(results,fields) {
                     console.log('\n');
                     console.table(fields);
@@ -47,6 +66,7 @@ function handleMainOptions(choice) {
             break;
         case 'Add A Department':
             //do stuff
+                addToDatabase("department", "test");
             break;
         case 'Add A Role':
             //do stuff
