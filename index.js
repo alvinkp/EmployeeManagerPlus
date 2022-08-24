@@ -47,7 +47,7 @@ function addToTable(category, data) {
     }
 }
 
-// Handle Main options
+// Handle when Main options are selected
 function handleMainOptions(choice) {
     switch (choice.selection) {
 
@@ -87,7 +87,7 @@ function handleMainOptions(choice) {
             break;
 
         case 'Add An Employee':
-            addToTable("employee", "test");
+            addSomethingToTable("employee");
             break;
 
         case 'Update An Employee Role':
@@ -100,16 +100,7 @@ function handleMainOptions(choice) {
 
 // INQUIRE: Add additional
 function addSomethingToTable(category) {
-    let currentDepartments = [];
-    if (category === 'role') {
-        connection.promise().query('SELECT department_name FROM departments;')
-            .then(([rows]) => {
-                for (row of rows) {
-                    currentDepartments.push(row.department_name);
-                }
-            });
-    }
-
+    
     switch (category) {
 
         case 'department':
@@ -127,6 +118,13 @@ function addSomethingToTable(category) {
             break;
 
         case 'role':
+            let currentDepartments = [];
+            connection.promise().query('SELECT department_name FROM departments;')
+            .then(([rows]) => {
+                for (row of rows) {
+                    currentDepartments.push(row.department_name);
+                }
+            
             inquirer
                 .prompt([
                     {
@@ -150,7 +148,60 @@ function addSomethingToTable(category) {
                 .then((answer) => {
                     addToTable('role', answer);
                 })
+                });
             break;
+
+            case 'employee':
+                let currentRoles = [];
+                connection.promise().query('SELECT title FROM roles;')
+                .then(([rows]) => {
+                    for (row of rows) {
+                        currentRoles.push(row.title);
+                    }
+                })
+
+                    let currentManagers = [];
+                    connection.promise().query('SELECT CONCAT(first_name, " " , last_name) AS Managers FROM employees;')
+                    .then(([rows]) => {
+                        for (row of rows) {
+                            currentManagers.push(row.Managers);
+                            currentManagers.unshift('None');
+                        }
+
+                inquirer
+                    .prompt([
+                        {
+                            type: 'input',
+                            name: 'first_name',
+                            message: "What is the employee's first name?",
+                        },
+                        {
+                            type: 'input',
+                            name: 'last_name',
+                            message: "What is the employee's last name?",
+                        },
+                        {
+                            type: 'list',
+                            name: 'role',
+                            message: "What is the employee's role?",
+                            choices: currentRoles,
+                        },
+                        {
+                            type: 'list',
+                            name: 'manager',
+                            message: "Who is the employee's Manager?",
+                            choices: currentManagers,
+                        },
+    
+                    ])
+                    .then((answer) => {
+                        addToTable('employee', answer);
+                    })
+                });
+                break;
+
+                default:
+            console.log("There's been a grave mistake!");
     }
 }
 
