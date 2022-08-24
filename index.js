@@ -4,6 +4,7 @@ const inquirer = require('inquirer');
 const mysql2 = require('mysql2');
 const cTable = require('console.table');
 
+
 // MYSQL2: Create a connection to the database
 const connection = mysql2.createConnection({
     host: 'localhost',
@@ -40,8 +41,35 @@ function addToTable(category, data) {
             break;
 
         case 'employee':
-            break;
+            let manager = data.manager.split(" ");
+            let roleID;
+            let managerID = 'NULL';
+            connection.promise().query('SELECT id FROM roles WHERE title = ' + "'" + data.role + "'" + ';')
+                .then(([rows]) => {
+                    roleID = rows[0].id;
 
+                if(data.manager !== 'None'){
+                    connection.promise().query('SELECT id FROM employees WHERE first_name =' + "'" + manager[0] + "'" + ' AND last_name =' + "'" + manager[1] + "'" + ';')
+                    .then(([rows]) => {
+                        managerID = rows[0].id;
+                        connection.promise().execute('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (' + '"' + data.first_name + '"' + "," + '"' + data.last_name + '"' + ',' + roleID + ',' + managerID + ');')
+                        console.log("\n");
+                        console.log(`Added ${data.first_name + " " + data.last_name} with a role of ${data.role} and ${data.manager} as their Manager to the Employees Table in the Database`);
+                        console.log("\n");
+                        presentOptions();
+                    });
+                } 
+                
+                else if(data.manager === 'None'){
+                    connection.promise().execute('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (' + '"' + data.first_name + '"' + "," + '"' + data.last_name + '"' + ',' + roleID + ',' + managerID + ');')
+                    console.log("\n");
+                    console.log(`Added ${data.first_name + " " + data.last_name} with a role of ${data.role} to the Employees Table in the Database`);
+                    console.log("\n");
+                    presentOptions();
+                }
+                });                     
+            break;
+            
         default:
             console.log("There's been a grave mistake!");
     }
@@ -161,13 +189,13 @@ function addSomethingToTable(category) {
                 })
 
                     let currentManagers = [];
-                    connection.promise().query('SELECT CONCAT(first_name, " " , last_name) AS Managers FROM employees;')
+                    connection.promise().query('SELECT first_name, last_name FROM employees;')
                     .then(([rows]) => {
                         for (row of rows) {
-                            currentManagers.push(row.Managers);
-                            currentManagers.unshift('None');
+                            currentManagers.push(row.first_name + " " + row.last_name);
                         }
-
+                        currentManagers.unshift('None');
+                        console.log([currentManagers]);
                 inquirer
                     .prompt([
                         {
