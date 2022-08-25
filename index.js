@@ -14,7 +14,7 @@ const connection = mysql2.createConnection({
 });
 
 
-// Add Department, Add a Role, Add an Employee function
+// MYSQL2: Add Department, Add a Role, Add an Employee to Database
 function addToTable(category, data) {
 
     switch (category) {
@@ -48,30 +48,40 @@ function addToTable(category, data) {
                 .then(([rows]) => {
                     roleID = rows[0].id;
 
-                if(data.manager !== 'None'){
-                    connection.promise().query('SELECT id FROM employees WHERE first_name =' + "'" + manager[0] + "'" + ' AND last_name =' + "'" + manager[1] + "'" + ';')
-                    .then(([rows]) => {
-                        managerID = rows[0].id;
+                    if (data.manager !== 'None') {
+                        connection.promise().query('SELECT id FROM employees WHERE first_name =' + "'" + manager[0] + "'" + ' AND last_name =' + "'" + manager[1] + "'" + ';')
+                            .then(([rows]) => {
+                                managerID = rows[0].id;
+                                connection.promise().execute('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (' + '"' + data.first_name + '"' + "," + '"' + data.last_name + '"' + ',' + roleID + ',' + managerID + ');')
+                                console.log("\n");
+                                console.log(`Added ${data.first_name + " " + data.last_name} with a role of ${data.role} and ${data.manager} as their Manager to the Employees Table in the Database`);
+                                console.log("\n");
+                                presentOptions();
+                            });
+                    }
+
+                    else if (data.manager === 'None') {
                         connection.promise().execute('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (' + '"' + data.first_name + '"' + "," + '"' + data.last_name + '"' + ',' + roleID + ',' + managerID + ');')
                         console.log("\n");
-                        console.log(`Added ${data.first_name + " " + data.last_name} with a role of ${data.role} and ${data.manager} as their Manager to the Employees Table in the Database`);
+                        console.log(`Added ${data.first_name + " " + data.last_name} with a role of ${data.role} to the Employees Table in the Database`);
                         console.log("\n");
                         presentOptions();
-                    });
-                } 
-                
-                else if(data.manager === 'None'){
-                    connection.promise().execute('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (' + '"' + data.first_name + '"' + "," + '"' + data.last_name + '"' + ',' + roleID + ',' + managerID + ');')
-                    console.log("\n");
-                    console.log(`Added ${data.first_name + " " + data.last_name} with a role of ${data.role} to the Employees Table in the Database`);
-                    console.log("\n");
-                    presentOptions();
-                }
-                });                     
+                    }
+                });
             break;
-            
+
         default:
             console.log("There's been a grave mistake!");
+    }
+}
+
+// MYSQL2: Modify existing entry in Database
+function modifyDatabaseEntry(entry, data) {
+    switch (entry) {
+        case 'update role':
+            console.log('UPDATE employees SET role_id = ' + data[1] + ' WHERE employee_id= ' + data[0] + ';')
+            //connection.promise().execute('UPDATE employees SET role_id = ' + data[1] + 'WHERE employee_id= ' + data[0] + ';')
+            break;
     }
 }
 
@@ -119,6 +129,7 @@ function handleMainOptions(choice) {
             break;
 
         case 'Update An Employee Role':
+            addSomethingToTable("update role");
             break;
 
         default:
@@ -126,9 +137,9 @@ function handleMainOptions(choice) {
     }
 }
 
-// INQUIRE: Add additional
+// INQUIRE: Add additional Department, Role or Employee to it's respective table, Modify an existing employee's role
 function addSomethingToTable(category) {
-    
+
     switch (category) {
 
         case 'department':
@@ -148,92 +159,141 @@ function addSomethingToTable(category) {
         case 'role':
             let currentDepartments = [];
             connection.promise().query('SELECT department_name FROM departments;')
-            .then(([rows]) => {
-                for (row of rows) {
-                    currentDepartments.push(row.department_name);
-                }
-            
-            inquirer
-                .prompt([
-                    {
-                        type: 'input',
-                        name: 'name',
-                        message: 'What is the name of the role you would like to add?',
-                    },
-                    {
-                        type: 'input',
-                        name: 'salary',
-                        message: 'What is the Salary of that role?',
-                    },
-                    {
-                        type: 'list',
-                        name: 'department',
-                        message: 'Which department does the role belong to?',
-                        choices: currentDepartments,
+                .then(([rows]) => {
+                    for (row of rows) {
+                        currentDepartments.push(row.department_name);
                     }
 
-                ])
-                .then((answer) => {
-                    addToTable('role', answer);
-                })
+                    inquirer
+                        .prompt([
+                            {
+                                type: 'input',
+                                name: 'name',
+                                message: 'What is the name of the role you would like to add?',
+                            },
+                            {
+                                type: 'input',
+                                name: 'salary',
+                                message: 'What is the Salary of that role?',
+                            },
+                            {
+                                type: 'list',
+                                name: 'department',
+                                message: 'Which department does the role belong to?',
+                                choices: currentDepartments,
+                            }
+
+                        ])
+                        .then((answer) => {
+                            addToTable('role', answer);
+                        })
                 });
             break;
 
-            case 'employee':
-                let currentRoles = [];
-                connection.promise().query('SELECT title FROM roles;')
+        case 'employee':
+            let currentRoles = [];
+            connection.promise().query('SELECT title FROM roles;')
                 .then(([rows]) => {
                     for (row of rows) {
                         currentRoles.push(row.title);
                     }
                 })
 
-                    let currentManagers = [];
-                    connection.promise().query('SELECT first_name, last_name FROM employees;')
-                    .then(([rows]) => {
-                        for (row of rows) {
-                            currentManagers.push(row.first_name + " " + row.last_name);
-                        }
-                        currentManagers.unshift('None');
-                        console.log([currentManagers]);
-                inquirer
-                    .prompt([
-                        {
-                            type: 'input',
-                            name: 'first_name',
-                            message: "What is the employee's first name?",
-                        },
-                        {
-                            type: 'input',
-                            name: 'last_name',
-                            message: "What is the employee's last name?",
-                        },
-                        {
-                            type: 'list',
-                            name: 'role',
-                            message: "What is the employee's role?",
-                            choices: currentRoles,
-                        },
-                        {
-                            type: 'list',
-                            name: 'manager',
-                            message: "Who is the employee's Manager?",
-                            choices: currentManagers,
-                        },
-    
-                    ])
-                    .then((answer) => {
-                        addToTable('employee', answer);
-                    })
-                });
-                break;
+            let currentManagers = [];
+            connection.promise().query('SELECT first_name, last_name FROM employees;')
+                .then(([rows]) => {
+                    for (row of rows) {
+                        currentManagers.push(row.first_name + " " + row.last_name);
+                    }
+                    currentManagers.unshift('None');
+                    console.log([currentManagers]);
+                    inquirer
+                        .prompt([
+                            {
+                                type: 'input',
+                                name: 'first_name',
+                                message: "What is the employee's first name?",
+                            },
+                            {
+                                type: 'input',
+                                name: 'last_name',
+                                message: "What is the employee's last name?",
+                            },
+                            {
+                                type: 'list',
+                                name: 'role',
+                                message: "What is the employee's role?",
+                                choices: currentRoles,
+                            },
+                            {
+                                type: 'list',
+                                name: 'manager',
+                                message: "Who is the employee's Manager?",
+                                choices: currentManagers,
+                            },
 
-                default:
+                        ])
+                        .then((answer) => {
+                            addToTable('employee', answer);
+                        })
+                });
+            break;
+
+        case 'update role':
+            let currentEmployees = [];
+            connection.promise().query('SELECT first_name, last_name FROM employees;')
+                .then(([rows]) => {
+                    for (row of rows) {
+                        currentEmployees.push(row.first_name + " " + row.last_name);
+                    }
+
+                    let currentRoles = [];
+                    connection.promise().query('SELECT title FROM roles;')
+                        .then(([rows]) => {
+                            for (row of rows) {
+                                currentRoles.push(row.title);
+                            }
+
+                            inquirer
+                                .prompt([
+                                    {
+                                        type: 'list',
+                                        name: 'employees',
+                                        message: 'Which employee do you want to update?',
+                                        choices: currentEmployees,
+                                    },
+                                    {
+                                        type: 'list',
+                                        name: 'role',
+                                        message: "What is the employee's new role?",
+                                        choices: currentRoles,
+                                    },
+                                ])
+                                .then((answer) => {
+                                    let myAnswer = []
+                                    let selectedEmployee = answer.employees.split(" ");
+                                    console.log('SELECT id FROM employees WHERE first_name = ' + "'"+ selectedEmployee[0] + "' AND last_name =" + "'" + selectedEmployee[1] + "'");
+                                    connection.promise().query('SELECT id FROM employees WHERE first_name = ' + "'"+ selectedEmployee[0] + "' AND last_name =" + "'" + selectedEmployee[1] + "'")
+                                        .then(([rows]) => {
+                                            console.log(rows);
+                                            myAnswer.push(rows[0].id)
+                                                connection.promise().query('SELECT id FROM roles WHERE title = ' + "'" + answer.role + "';")
+                                                .then([rows])
+                                                    myAnswer.push(rows[0].id)
+                                                    modifyDatabaseEntry('update role', myAnswer);
+                                        })
+
+                                })
+                        })
+                });
+            break;
+
+        default:
             console.log("There's been a grave mistake!");
     }
 }
 
-// INQUIRE: Present options
+// INQUIRE: Present options for user to choose from
 function presentOptions() {
     inquirer
         .prompt([
