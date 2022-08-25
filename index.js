@@ -85,6 +85,14 @@ function modifyDatabaseEntry(entry, data) {
             console.log("\n");
             presentOptions();
             break;
+
+        case 'update manager':
+            connection.promise().execute('UPDATE employees SET manager_id = ' + data[1] + ' WHERE id= ' + data[0] + ';')
+            console.log("\n");
+            console.log(`Updated Manager Succesfully!`);
+            console.log("\n");
+            presentOptions();
+            break;
     }
 }
 
@@ -119,6 +127,51 @@ function handleMainOptions(choice) {
                 });
             break;
 
+        case "View All Employees by Manager":
+            let currentEmployees = [];
+            connection.promise().query('SELECT CONCAT(mgr.first_name," ",mgr.last_name) AS Manager FROM employees worker LEFT JOIN employees mgr ON worker.manager_id=mgr.id;')
+                .then(([rows]) => {
+                    for (let i = 0; i < rows.length; i++) {
+                        if(rows[i].Manager !== null){
+                            if (!currentEmployees.includes(rows[i].Manager)) {
+                                currentEmployees.push(rows[i].Manager);
+                            }
+                        }
+                    }
+
+                    inquirer
+                        .prompt([
+                            {
+                                type: 'list',
+                                name: 'manager',
+                                message: 'Which Manager\'s employee\'s would you like to view?',
+                                choices: currentEmployees
+                            }
+                        ])
+                        .then((answer) => {
+                            let selectedManager = answer.manager.split(" ");
+                            
+                            connection.promise().query('SELECT id FROM employees WHERE first_name = ' + "'" + selectedManager[0] + "' AND last_name =" + "'" + selectedManager[1] + "'")
+                                .then(([rows]) => {
+                                    let myMgrId = rows[0].id
+
+                                    connection.promise().query('SELECT CONCAT(first_name, " ", last_name) AS "Direct Report(s)" FROM employees WHERE manager_id = ' + myMgrId + ';')
+                                        .then(([rows]) => {
+                                            console.log('\n');
+                                            console.table(rows);
+                                            presentOptions();
+                                        });
+
+                                })
+
+
+
+                        })
+
+
+                })
+            break;
+
         case 'Add A Department':
             addSomethingToTable('department');
             break;
@@ -131,8 +184,12 @@ function handleMainOptions(choice) {
             addSomethingToTable("employee");
             break;
 
-        case 'Update An Employee Role':
+        case 'Update An Employee\'s Role':
             addSomethingToTable("update role");
+            break;
+
+        case 'Update An Employee\'s Manager':
+            addSomethingToTable("update manager");
             break;
 
         default:
@@ -275,21 +332,80 @@ function addSomethingToTable(category) {
                                 .then((answer) => {
                                     let myAnswer = []
                                     let selectedEmployee = answer.employees.split(" ");
-                                    console.log('SELECT id FROM employees WHERE first_name = ' + "'" + selectedEmployee[0] + "' AND last_name =" + "'" + selectedEmployee[1] + "'");
                                     connection.promise().query('SELECT id FROM employees WHERE first_name = ' + "'" + selectedEmployee[0] + "' AND last_name =" + "'" + selectedEmployee[1] + "'")
                                         .then(([rows]) => {
                                             let myEmpId = rows[0].id
-                                            console.log(myEmpId)
                                             myAnswer.push(myEmpId)
 
 
                                             connection.promise().query('SELECT id FROM roles WHERE title = ' + "'" + answer.role + "';")
                                                 .then(([rows]) => {
                                                     let myRoleID = rows[0].id
-                                                    console.log(myRoleID)
                                                     myAnswer.push(myRoleID)
                                                     modifyDatabaseEntry('update role', myAnswer);
                                                 })
+                                        })
+                                })
+                        })
+                });
+            break;
+
+        case 'update manager':
+            let currentEmp = [];
+            let potentialManagers = [];
+            connection.promise().query('SELECT first_name, last_name FROM employees;')
+                .then(([rows]) => {
+                    for (row of rows) {
+                        currentEmp.push(row.first_name + " " + row.last_name);
+                    }
+                    connection.promise().query('SELECT first_name, last_name FROM employees;')
+                        .then(([rows]) => {
+                            for (row of rows) {
+                                potentialManagers.push(row.first_name + " " + row.last_name);
+                            }
+                            potentialManagers.unshift('Remove Current Manager');
+
+                            inquirer
+                                .prompt([
+                                    {
+                                        type: 'list',
+                                        name: 'employee',
+                                        message: 'Which employee do you want to update?',
+                                        choices: currentEmp,
+                                    },
+                                    {
+                                        type: 'list',
+                                        name: 'manager',
+                                        message: "Who should be the employee's manager?",
+                                        choices: potentialManagers,
+                                    },
+                                ])
+                                .then((answer) => {
+                                    let myAnswer = []
+                                    let selectedEmployee = answer.employee.split(" ");
+
+                                    connection.promise().query('SELECT id FROM employees WHERE first_name = ' + "'" + selectedEmployee[0] + "' AND last_name =" + "'" + selectedEmployee[1] + "'")
+                                        .then(([rows]) => {
+                                            let myEmpId = rows[0].id
+                                            myAnswer.push(myEmpId)
+
+                                            if (answer.manager !== "Remove Current Manager") {
+                                                let selectedManager = answer.manager.split(" ");
+                                                connection.promise().query('SELECT id FROM employees WHERE first_name = ' + "'" + selectedManager[0] + "' AND last_name =" + "'" + selectedManager[1] + "'")
+                                                    .then(([rows]) => {
+                                                        let myMgrId = rows[0].id
+                                                        myAnswer.push(myMgrId)
+                                                        modifyDatabaseEntry('update manager', myAnswer);
+                                                        return;
+                                                    })
+
+                                            } else if (answer.manager === "Remove Current Manager") {
+                                                let myMgrID = 'NULL';
+                                                myAnswer.push(myMgrID);
+                                                modifyDatabaseEntry('update manager', myAnswer);
+                                                return;
+                                            }
+
                                         })
                                 })
                         })
@@ -309,7 +425,7 @@ function presentOptions() {
                 type: 'list',
                 name: 'selection',
                 message: 'Please choose an option below',
-                choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee Role']
+                choices: ['View All Departments', 'View All Roles', 'View All Employees', "View All Employees by Manager", 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee\'s Role', 'Update An Employee\'s Manager']
             }
         ])
         .then((answer) => {
