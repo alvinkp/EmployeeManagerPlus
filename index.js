@@ -79,8 +79,11 @@ function addToTable(category, data) {
 function modifyDatabaseEntry(entry, data) {
     switch (entry) {
         case 'update role':
-            console.log('UPDATE employees SET role_id = ' + data[1] + ' WHERE employee_id= ' + data[0] + ';')
-            //connection.promise().execute('UPDATE employees SET role_id = ' + data[1] + 'WHERE employee_id= ' + data[0] + ';')
+            connection.promise().execute('UPDATE employees SET role_id = ' + data[1] + ' WHERE id= ' + data[0] + ';')
+            console.log("\n");
+            console.log(`Updated Role Succesfully!`);
+            console.log("\n");
+            presentOptions();
             break;
     }
 }
@@ -272,17 +275,22 @@ function addSomethingToTable(category) {
                                 .then((answer) => {
                                     let myAnswer = []
                                     let selectedEmployee = answer.employees.split(" ");
-                                    console.log('SELECT id FROM employees WHERE first_name = ' + "'"+ selectedEmployee[0] + "' AND last_name =" + "'" + selectedEmployee[1] + "'");
-                                    connection.promise().query('SELECT id FROM employees WHERE first_name = ' + "'"+ selectedEmployee[0] + "' AND last_name =" + "'" + selectedEmployee[1] + "'")
+                                    console.log('SELECT id FROM employees WHERE first_name = ' + "'" + selectedEmployee[0] + "' AND last_name =" + "'" + selectedEmployee[1] + "'");
+                                    connection.promise().query('SELECT id FROM employees WHERE first_name = ' + "'" + selectedEmployee[0] + "' AND last_name =" + "'" + selectedEmployee[1] + "'")
                                         .then(([rows]) => {
-                                            console.log(rows);
-                                            myAnswer.push(rows[0].id)
-                                                connection.promise().query('SELECT id FROM roles WHERE title = ' + "'" + answer.role + "';")
-                                                .then([rows])
-                                                    myAnswer.push(rows[0].id)
-                                                    modifyDatabaseEntry('update role', myAnswer);
-                                        })
+                                            let myEmpId = rows[0].id
+                                            console.log(myEmpId)
+                                            myAnswer.push(myEmpId)
 
+
+                                            connection.promise().query('SELECT id FROM roles WHERE title = ' + "'" + answer.role + "';")
+                                                .then(([rows]) => {
+                                                    let myRoleID = rows[0].id
+                                                    console.log(myRoleID)
+                                                    myAnswer.push(myRoleID)
+                                                    modifyDatabaseEntry('update role', myAnswer);
+                                                })
+                                        })
                                 })
                         })
                 });
