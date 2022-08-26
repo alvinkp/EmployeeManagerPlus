@@ -566,7 +566,6 @@ function addSomethingToTable(category) {
                     connection.promise().query('SELECT salary FROM roles WHERE department_id =(SELECT id from departments WHERE department_name = ' + "'" + answer.dept + "'" + ') ;')
                     .then(([rows])=>{
                         for(row of rows){
-                            console.log(row.salary)
                             total = total + parseInt(row.salary);
                         }
                         console.log("\n");
