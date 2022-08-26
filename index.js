@@ -176,7 +176,6 @@ function handleMainOptions(choice) {
         let currentDepartments = [];
         connection.promise().query('SELECT department_name FROM departments ORDER BY id;')
             .then(([rows]) => {
-                console.log(rows[0])
                     for(row of rows){
                         currentDepartments.push(row.department_name);
                     }
@@ -221,6 +220,17 @@ function handleMainOptions(choice) {
             addSomethingToTable("update manager");
             break;
 
+        case 'Remove A Department':
+            addSomethingToTable("delete department");
+            break;
+
+        case 'Remove A Role':
+            addSomethingToTable("delete role");
+            break;
+
+        case 'Remove An Employee':
+            addSomethingToTable("delete employee");
+            break;
         default:
             console.log("There's been a grave mistake!");
     }
@@ -295,7 +305,6 @@ function addSomethingToTable(category) {
                         currentManagers.push(row.first_name + " " + row.last_name);
                     }
                     currentManagers.unshift('None');
-                    console.log([currentManagers]);
                     inquirer
                         .prompt([
                             {
@@ -441,6 +450,95 @@ function addSomethingToTable(category) {
                 });
             break;
 
+            case "delete department":
+                let departments = [];
+                    connection.promise().query('SELECT department_name FROM departments ORDER BY id;')
+                    .then(([rows]) => {
+                    for(row of rows){
+                        departments.push(row.department_name);
+                    }
+            
+            inquirer
+                .prompt([
+                    {
+                        type: 'list',
+                        name: 'department',
+                        message: 'Which Department would you like to remove?',
+                        choices: departments
+                    }
+                ])
+                .then((answer) => {
+                    connection.promise().execute("DELETE FROM departments WHERE department_name = " + "'" + answer.department + "'" + ";")
+                        .then(([rows]) => {
+                            console.log("\n");
+                            console.log(`Removed ${answer.department} Department Succesfully!`);
+                            console.log("\n");
+                            presentOptions();
+                    })
+                })
+            });
+
+            break;
+
+            case "delete role":
+                let roles = [];
+                    connection.promise().query('SELECT title FROM roles ORDER BY id;')
+                    .then(([rows]) => {
+                    for(row of rows){
+                        roles.push(row.title);
+                    }
+            
+            inquirer
+                .prompt([
+                    {
+                        type: 'list',
+                        name: 'role',
+                        message: 'Which Role would you like to remove?',
+                        choices: roles
+                    }
+                ])
+                .then((answer) => {
+                    connection.promise().execute("DELETE FROM roles WHERE title = " + "'" + answer.role + "'" + ";")
+                        .then(([rows]) => {
+                            console.log("\n");
+                            console.log(`Removed ${answer.role} Role Succesfully!`);
+                            console.log("\n");
+                            presentOptions();
+                    })
+                })
+            });
+            break;
+
+            case "delete employee":
+                let employees = [];
+                    connection.promise().query('SELECT CONCAT(first_name, " ", last_name) AS "Name" FROM employees ORDER BY id;')
+                    .then(([rows]) => {
+                    for(row of rows){
+                        employees.push(row.Name);
+                    }
+            
+            inquirer
+                .prompt([
+                    {
+                        type: 'list',
+                        name: 'employee',
+                        message: 'Which Employee would you like to remove?',
+                        choices: employees
+                    }
+                ])
+                .then((answer) => {
+                    let employeeName = answer.employee.split(" ");
+                    connection.promise().execute("DELETE FROM employees WHERE first_name = " + "'" + employeeName[0] + "'" + "AND last_name = " + "'" + employeeName[1] + "'" + ";")
+                        .then(([rows]) => {
+                            console.log("\n");
+                            console.log(`Removed Employee ${answer.employee} Succesfully!`);
+                            console.log("\n");
+                            presentOptions();
+                    })
+                })
+            });
+            break;
+
         default:
             console.log("There's been a grave mistake!");
     }
@@ -454,7 +552,7 @@ function presentOptions() {
                 type: 'list',
                 name: 'selection',
                 message: 'Please choose an option below',
-                choices: ['View All Departments', 'View All Roles', 'View All Employees', "View All Employees by Manager", "View Employees By Department", 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee\'s Role', 'Update An Employee\'s Manager']
+                choices: ['View All Departments', 'View All Roles', 'View All Employees', "View All Employees by Manager", "View Employees By Department", 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee\'s Role', 'Update An Employee\'s Manager', 'Remove A Department', 'Remove A Role', 'Remove An Employee']
             }
         ])
         .then((answer) => {
