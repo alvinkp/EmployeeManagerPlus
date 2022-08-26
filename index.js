@@ -172,6 +172,35 @@ function handleMainOptions(choice) {
                 })
             break;
 
+        case "View Employees By Department":
+        let currentDepartments = [];
+        connection.promise().query('SELECT department_name FROM departments ORDER BY id;')
+            .then(([rows]) => {
+                console.log(rows[0])
+                    for(row of rows){
+                        currentDepartments.push(row.department_name);
+                    }
+            
+            inquirer
+                .prompt([
+                    {
+                        type: 'list',
+                        name: 'department',
+                        message: 'Which Department\'s employee\'s would you like to view?',
+                        choices: currentDepartments
+                    }
+                ])
+                .then((answer) => {
+                    connection.promise().query('SELECT CONCAT(first_name, " ",last_name) AS "Employee(s)" FROM employees JOIN roles ON role_id = roles.id JOIN departments ON roles.department_id = departments.id WHERE department_name = ' + "'" + answer.department + "';")
+                        .then(([rows]) => {
+                        console.log('\n');
+                        console.table(rows);
+                        presentOptions();
+                    })
+                })
+            });
+        break;
+
         case 'Add A Department':
             addSomethingToTable('department');
             break;
@@ -425,7 +454,7 @@ function presentOptions() {
                 type: 'list',
                 name: 'selection',
                 message: 'Please choose an option below',
-                choices: ['View All Departments', 'View All Roles', 'View All Employees', "View All Employees by Manager", 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee\'s Role', 'Update An Employee\'s Manager']
+                choices: ['View All Departments', 'View All Roles', 'View All Employees', "View All Employees by Manager", "View Employees By Department", 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee\'s Role', 'Update An Employee\'s Manager']
             }
         ])
         .then((answer) => {
