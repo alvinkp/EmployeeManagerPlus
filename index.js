@@ -231,6 +231,11 @@ function handleMainOptions(choice) {
         case 'Remove An Employee':
             addSomethingToTable("delete employee");
             break;
+
+        case "View Total Utilized Budget By Department":
+            addSomethingToTable("total budget");
+            break;
+
         default:
             console.log("There's been a grave mistake!");
     }
@@ -539,6 +544,40 @@ function addSomethingToTable(category) {
             });
             break;
 
+            case "total budget":
+                let depts = [];
+                let total = 0;
+                    connection.promise().query('SELECT department_name FROM departments ORDER BY id;')
+                    .then(([rows]) => {
+                    for(row of rows){
+                        depts.push(row.department_name);
+                    }
+            
+            inquirer
+                .prompt([
+                    {
+                        type: 'list',
+                        name: 'dept',
+                        message: 'Which Department would you like to remove?',
+                        choices: depts
+                    }
+                ])
+                .then((answer) => {
+                    connection.promise().query('SELECT salary FROM roles WHERE department_id =(SELECT id from departments WHERE department_name = ' + "'" + answer.dept + "'" + ') ;')
+                    .then(([rows])=>{
+                        for(row of rows){
+                            console.log(row.salary)
+                            total = total + parseInt(row.salary);
+                        }
+                        console.log("\n");
+                        console.log(`The total budget for ${answer.dept} is ${total}.`);
+                        console.log("\n");
+                        presentOptions();
+                    })
+                })
+            })
+            break;
+
         default:
             console.log("There's been a grave mistake!");
     }
@@ -552,7 +591,7 @@ function presentOptions() {
                 type: 'list',
                 name: 'selection',
                 message: 'Please choose an option below',
-                choices: ['View All Departments', 'View All Roles', 'View All Employees', "View All Employees by Manager", "View Employees By Department", 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee\'s Role', 'Update An Employee\'s Manager', 'Remove A Department', 'Remove A Role', 'Remove An Employee']
+                choices: ['View All Departments', 'View All Roles', 'View All Employees', "View All Employees by Manager", "View Employees By Department", 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee\'s Role', 'Update An Employee\'s Manager', 'Remove A Department', 'Remove A Role', 'Remove An Employee', "View Total Utilized Budget By Department"]
             }
         ])
         .then((answer) => {
